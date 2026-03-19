@@ -210,16 +210,7 @@ export function injectSlug(target, ...args) {
 
         shader.fragmentShader = shader.fragmentShader.replace(
             '#include <alphatest_fragment>',
-            `
-#if 0
-#ifdef USE_UV
-            diffuseColor.rgb = vec3(fract(vUv), 0.0);
-#endif
-#ifdef USE_MAP
-            diffuseColor.rgb = vec3(fract(vMapUv), 0.0);
-#endif
-#endif
-            ` + slug_fragment_standard + '\n#include <alphatest_fragment>'
+            slug_fragment_standard + '\n#include <alphatest_fragment>'
         );
     };
 

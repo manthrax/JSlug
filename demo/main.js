@@ -234,7 +234,7 @@ function createTextMesh() {
     canvas.width = 128;
     canvas.height = 128;
     const ctx = canvas.getContext('2d');
-    
+
     // Draw highly contrasting 2x2 Checkerboard 
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 128, 128);
     ctx.fillStyle = '#ee0088'; // Vibrant magenta for clear grid inspection
@@ -244,7 +244,7 @@ function createTextMesh() {
     const gridTex = new THREE.CanvasTexture(canvas);
     gridTex.wrapS = THREE.RepeatWrapping;
     gridTex.wrapT = THREE.RepeatWrapping;
-    gridTex.repeat.set(.1, .1); 
+    gridTex.repeat.set(.5, .5);
     gridTex.magFilter = THREE.NearestFilter;
     gridTex.minFilter = THREE.NearestFilter;
 
