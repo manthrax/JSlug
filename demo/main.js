@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-import { SlugMaterial, SlugGeometry, SlugGenerator, SlugLoader, applySlug } from '../src/index.js';
+import { SlugMaterial, SlugGeometry, SlugGenerator, SlugLoader, injectSlug } from '../src/index.js';
 
 // Only handles some generic unicode:
 // 漢字 ॐ ♞ ♠ ♡ ♢ ♣ ☻ ☼ 🎵 🚀 (Demonstrating generic Unicode vectors)
@@ -262,10 +262,14 @@ function createTextMesh() {
         });
     }
 
-    slugMesh = new THREE.Mesh(geometry, material);
+    let newSlugMesh = new THREE.Mesh(geometry, material);
+    if (slugMesh) {
+        newSlugMesh.position.copy(slugMesh.position);
+    }
+    slugMesh = newSlugMesh;
 
     // Apply the architectural PBR macros and instantiate Shared Global Shadow maps securely
-    applySlug(slugMesh, material, loadedData);
+    injectSlug(slugMesh, material, loadedData);
 
     // Let Three.js dynamically build the Depth Material derived from our onBeforeCompile graph instead of forcing custom
     slugMesh.castShadow = true;

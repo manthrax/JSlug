@@ -28,7 +28,7 @@ Unlike traditional MSDF (Multi-Channel Signed Distance Field) font rendering whi
 
 ```javascript
 import * as THREE from 'three';
-import { SlugLoader, SlugGeometry, applySlug } from 'three-slug';
+import { SlugLoader, SlugGeometry, injectSlug } from 'three-slug';
 
 // 1. Load the pre-compiled .sluggish binary font data
 new SlugLoader().load('path/to/font.sluggish', (slugData) => {
@@ -48,7 +48,7 @@ new SlugLoader().load('path/to/font.sluggish', (slugData) => {
     const slugMesh = new THREE.Mesh(geometry, material);
 
     // 5. Inject the mathematical Slug raytracer and auto-bind Shadow caches seamlessly
-    applySlug(slugMesh, material, slugData);
+    injectSlug(slugMesh, material, slugData);
     
     // 6. Append your text
     geometry.addText('MyString! WOOHOO!', slugData, {
