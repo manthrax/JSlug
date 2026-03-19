@@ -143,9 +143,11 @@ const slug_vertex = `
 `;
 
 export function injectSlug(material, slugData) {
+    if (material.userData && material.userData.slugInjected) return; // Prevent redundant native macro splicing
+    
     material.transparent = true;
     // Lower alphaTest threshold to safely cast shadows over empty space without prematurely culling soft anti-aliased edges
-    material.alphaTest = 0.01; 
+    material.alphaTest = 0.01;  
 
     material.onBeforeCompile = (shader) => {
         shader.uniforms.curvesTex = { value: slugData.curvesTex };
@@ -174,6 +176,31 @@ export function injectSlug(material, slugData) {
 
     // Also attach to userData so we can clone easily or reference
     material.userData.slugData = slugData;
+    material.userData.slugInjected = true;
+}
+
+export function applySlug(mesh, material, slugData) {
+    mesh.material = material;
+    
+    // Wire the primary shader logic seamlessly into the active rendering material
+    injectSlug(material, slugData);
+
+    // Skip heavy native shadow pipelines for raw debugging fallback shaders
+    if (material.isRawShaderMaterial) return;
+
+    // Globally cache shadow buffers by mathematical Font Signature to strictly reduce WebGL Program memory allocations
+    if (!slugData._depthMaterial) {
+        slugData._depthMaterial = new THREE.MeshDepthMaterial({ side: THREE.DoubleSide });
+        injectSlug(slugData._depthMaterial, slugData);
+    }
+    
+    if (!slugData._distanceMaterial) {
+        slugData._distanceMaterial = new THREE.MeshDistanceMaterial({ side: THREE.DoubleSide });
+        injectSlug(slugData._distanceMaterial, slugData);
+    }
+
+    mesh.customDepthMaterial = slugData._depthMaterial;
+    mesh.customDistanceMaterial = slugData._distanceMaterial;
 }
 
 const SLUG_RAW_PIXEL_SHADER = `

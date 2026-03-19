@@ -1,10 +1,8 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { SlugLoader } from '../src/SlugLoader.js';
-import { SlugMaterial, injectSlug } from '../src/SlugMaterial.js';
-import { SlugGeometry } from '../src/SlugGeometry.js';
-import { SlugGenerator } from '../src/SlugGenerator.js';
+
+import { SlugMaterial, SlugGeometry, SlugGenerator, SlugLoader, applySlug } from '../src/index.js';
 
 // Only handles some generic unicode:
 // 漢字 ॐ ♞ ♠ ♡ ♢ ♣ ☻ ☼ 🎵 🚀 (Demonstrating generic Unicode vectors)
@@ -29,7 +27,8 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 1.0); // Pure black background
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.shadowMap.samples = 4;
     document.body.appendChild(renderer.domElement);
 
     // Swap to Perspective camera to fly around
@@ -106,6 +105,10 @@ function init() {
     });
 
     document.getElementById('useRawShader').addEventListener('change', () => {
+        if (loadedData) createTextMesh();
+    });
+
+    document.getElementById('textJustify').addEventListener('change', () => {
         if (loadedData) createTextMesh();
     });
 
@@ -224,35 +227,12 @@ function createTextMesh() {
     }
 
     const useRawFallback = document.getElementById('useRawShader').checked;
-    let material, depthMaterial, distanceMaterial;
+    let material;
 
-    if (useRawFallback) {
-        material = new SlugMaterial({
-            curvesTex: loadedData.curvesTex,
-            bandsTex: loadedData.bandsTex
-        });
-        // No custom shadow material for raw shader fallback
-    } else {
-        material = new THREE.MeshStandardMaterial({
-            color: 0xffcc00,     // Golden yellow
-            roughness: 1.0,      // Pure diffuse plastic surface to properly scatter un-angled SpotLight luminance
-            metalness: 0.0,      // Removing metalness prevents the flat quads from reflecting the void into a dark mirror
-            side: THREE.DoubleSide
-        });
-        injectSlug(material, loadedData);
 
-        depthMaterial = new THREE.MeshDepthMaterial({
-            side: THREE.DoubleSide
-        });
-        injectSlug(depthMaterial, loadedData);
-
-        distanceMaterial = new THREE.MeshDistanceMaterial({
-            side: THREE.DoubleSide
-        });
-        injectSlug(distanceMaterial, loadedData);
-    }
 
     const textToRender = document.getElementById('textInput').value;
+    const justifyMode = document.getElementById('textJustify').value;
 
     // Dynamically size the geometry capacity to exactly the number of characters
     // Add a minimum of 1 to avoid Three.js throwing empty buffer errors
@@ -262,23 +242,38 @@ function createTextMesh() {
 
     geometry.addText(textToRender, loadedData, {
         fontScale: 0.5,
-        startX: -1000,
-        startY: 500,
-        justify: 'left'
+        startX: 0,
+        startY: 0,
+        justify: justifyMode
     });
+
+    if (useRawFallback) {
+        material = new SlugMaterial({
+            curvesTex: loadedData.curvesTex,
+            bandsTex: loadedData.bandsTex
+        });
+        // No custom shadow material for raw shader fallback
+    } else {
+        material = new THREE.MeshStandardMaterial({
+            color: 0xffaa00,     // Golden yellow
+            roughness: 1.0,      // Pure diffuse plastic surface to properly scatter un-angled SpotLight luminance
+            metalness: 0.0,      // Removing metalness prevents the flat quads from reflecting the void into a dark mirror
+            side: THREE.DoubleSide
+        });
+    }
 
     slugMesh = new THREE.Mesh(geometry, material);
 
-    if (depthMaterial) slugMesh.customDepthMaterial = depthMaterial;
-    if (distanceMaterial) slugMesh.customDistanceMaterial = distanceMaterial;
+    // Apply the architectural PBR macros and instantiate Shared Global Shadow maps securely
+    applySlug(slugMesh, material, loadedData);
 
     // Let Three.js dynamically build the Depth Material derived from our onBeforeCompile graph instead of forcing custom
     slugMesh.castShadow = true;
     slugMesh.receiveShadow = true;
 
     // Disabling frustum culling temporally to purely isolate WebGL shadow buffer pipelines
-    slugMesh.frustumCulled = false;
-    slugMesh.scale.multiplyScalar(.01);
+    //slugMesh.frustumCulled = false;
+    slugMesh.scale.multiplyScalar(.02);
     scene.add(slugMesh);
 }
 
@@ -295,11 +290,47 @@ function animate() {
     if (slugMesh) {
         const autoScroll = document.getElementById('autoScroll');
         if (autoScroll && autoScroll.checked) {
-            const speed = .2;
+            const speed = 1.7;
             slugMesh.position.y += speed;
-            if (slugMesh.position.y > 2800) {
-                slugMesh.position.y = -2400;
+            if (slugMesh.position.y > 1500) {
+                slugMesh.position.y -= 1000;
             }
+        }
+
+        const glitchCheckbox = document.getElementById('matrixGlitch');
+        if (glitchCheckbox && glitchCheckbox.checked && loadedData) {
+            if (Math.random() < 0.25) { // 25% chance per frame to glitch
+                let currentText = document.getElementById('textInput').value.split('');
+                let numGlitches = Math.floor(Math.random() * 8) + 1;
+                const keys = Array.from(loadedData.codePoints.keys()).filter(k => k > 32); // Exclude space and hidden ones
+                
+                for(let i=0; i < numGlitches; i++) {
+                    let idx = Math.floor(Math.random() * currentText.length);
+                    if (currentText[idx] !== '\n' && currentText[idx] !== ' ') {
+                        let randomChar = String.fromCodePoint(keys[Math.floor(Math.random() * keys.length)]);
+                        currentText[idx] = randomChar;
+                    }
+                }
+                
+                slugMesh.geometry.clear();
+                slugMesh.geometry.addText(currentText.join(''), loadedData, {
+                    fontScale: 0.5,
+                    startX: 0,
+                    startY: 0,
+                    justify: document.getElementById('textJustify').value
+                });
+                slugMesh.userData.isGlitched = true;
+            }
+        } else if (slugMesh.userData.isGlitched) {
+            // Restore original clean text immediately when unchecked
+            slugMesh.geometry.clear();
+            slugMesh.geometry.addText(document.getElementById('textInput').value, loadedData, {
+                fontScale: 0.5,
+                startX: 0,
+                startY: 0,
+                justify: document.getElementById('textJustify').value
+            });
+            slugMesh.userData.isGlitched = false;
         }
     }
 

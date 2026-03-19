@@ -1,5 +1,29 @@
 {
   "dependencies": {
     "opentype.js": "^1.3.4"
-  }
+  },
+  "name": "three-slug",
+  "version": "1.0.0",
+  "description": "JSlug is a Javascript and WebGL port of Eric Lengyel's **Slug** font rendering algorithm, implemented for **Three.js**.",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "type": "module",
+  "peerDependencies": {
+    "three": ">=0.160.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manthrax/JSlug.git"
+  },
+  "keywords": [],
+  "author": "manthrax",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/manthrax/JSlug/issues"
+  },
+  "homepage": "https://github.com/manthrax/JSlug#readme"
 }

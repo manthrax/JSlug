@@ -1,14 +1,14 @@
 
 
-# JSlug: Three.js Font Rendering Pipeline
+# three-slug: Native Three.js GPU Text Rendering
 
-JSlug is a Javascript and WebGL port of Eric Lengyel's **Slug** font rendering algorithm, implemented for **Three.js**.
+`three-slug` is a Javascript and WebGL port of Eric Lengyel's **Slug** font rendering algorithm, implemented natively for **Three.js**.
 
 Unlike traditional MSDF (Multi-Channel Signed Distance Field) font rendering which can suffer from corner rounding and texture resolution limits, the Slug algorithm evaluates the quadratic bezier curves of the TrueType font directly within the fragment shader. This enables resolution-independent font rendering, sharp corners, and precise anti-aliasing.
 
 ## Screenshots
 
-![JSlug Rendering Demo](screenshot.png)
+![three-slug Rendering Demo](screenshot.png)
 
 
 ## Features
@@ -28,9 +28,7 @@ Unlike traditional MSDF (Multi-Channel Signed Distance Field) font rendering whi
 
 ```javascript
 import * as THREE from 'three';
-import { SlugLoader } from './src/SlugLoader.js';
-import { SlugGeometry } from './src/SlugGeometry.js';
-import { injectSlug } from './src/SlugMaterial.js';
+import { SlugLoader, SlugGeometry, applySlug } from 'three-slug';
 
 // 1. Load the pre-compiled .sluggish binary font data
 new SlugLoader().load('path/to/font.sluggish', (slugData) => {
@@ -46,17 +44,18 @@ new SlugLoader().load('path/to/font.sluggish', (slugData) => {
         side: THREE.DoubleSide
     });
     
-    // 4. Inject the mathematical Slug raytracer directly into the material's Shader Chunks
-    injectSlug(material, slugData);
+    // 4. Spawn the finalized PBR Mesh
+    const slugMesh = new THREE.Mesh(geometry, material);
+
+    // 5. Inject the mathematical Slug raytracer and auto-bind Shadow caches seamlessly
+    applySlug(slugMesh, material, slugData);
     
-    // 5. Append your text
+    // 6. Append your text
     geometry.addText('MyString! WOOHOO!', slugData, {
         fontScale: 0.5,
         justify: 'center'
     });
 
-    // 6. Spawn the finalized PBR Mesh
-    const slugMesh = new THREE.Mesh(geometry, material);
     slugMesh.castShadow = true;
     slugMesh.receiveShadow = true;
     scene.add(slugMesh);
