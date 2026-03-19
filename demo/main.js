@@ -228,6 +228,20 @@ function createTextMesh() {
 
     const useRawFallback = document.getElementById('useRawShader').checked;
     let material;
+ 
+    // Create a procedural grid texture to test local UV-mapping layout support
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 128, 128);
+    ctx.strokeStyle = '#000000'; ctx.lineWidth = 10;
+    ctx.strokeRect(0, 0, 128, 128);
+    ctx.font = '700 80px sans-serif'; ctx.fillStyle = '#ff0000'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('+', 64, 64);
+    const gridTex = new THREE.CanvasTexture(canvas);
+    gridTex.wrapS = THREE.RepeatWrapping;
+    gridTex.wrapT = THREE.RepeatWrapping;
 
 
 
@@ -255,10 +269,11 @@ function createTextMesh() {
         // No custom shadow material for raw shader fallback
     } else {
         material = new THREE.MeshStandardMaterial({
-            color: 0xffaa00,     // Golden yellow
-            roughness: 1.0,      // Pure diffuse plastic surface to properly scatter un-angled SpotLight luminance
-            metalness: 0.0,      // Removing metalness prevents the flat quads from reflecting the void into a dark mirror
-            side: THREE.DoubleSide
+            color: 0x00aaff,     // Golden yellow
+            roughness: 0.3,      // Pure diffuse plastic surface to properly scatter un-angled SpotLight luminance
+            metalness: 0.1,      // Removing metalness prevents the flat quads from reflecting the void into a dark mirror
+            side: THREE.DoubleSide,
+            map: gridTex
         });
     }
 

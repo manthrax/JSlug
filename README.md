@@ -6,6 +6,10 @@
 
 Unlike traditional MSDF (Multi-Channel Signed Distance Field) font rendering which can suffer from corner rounding and texture resolution limits, the Slug algorithm evaluates the quadratic bezier curves of the TrueType font directly within the fragment shader. This enables resolution-independent font rendering, sharp corners, and precise anti-aliasing.
 
+## Demo
+
+[Demo](https://manthrax.github.io/JSlug/demo/)
+
 ## Screenshots
 
 ![three-slug Rendering Demo](screenshot.png)
