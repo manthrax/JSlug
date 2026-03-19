@@ -13,10 +13,10 @@ Unlike traditional MSDF (Multi-Channel Signed Distance Field) font rendering whi
 
 ## Features
 
-- **On-the-Fly Generation**: Parses `.ttf` and `.otf` fonts directly in the browser via `opentype.js`, computing boundary bands and extracting vector geometry on the client.
-- **`.sluggish` Binary Export**: Serializes the computed font curves and boundary bands into a binary structure (`.sluggish`) for network delivery.
-- **Three.js Instanced Rendering**: Leverages `InstancedBufferGeometry` and `RawShaderMaterial` to render text characters in a single GPU draw call.
-- **Dynamic Layout Engine**: Uses true font metrics (`advanceWidth`, Left Side Bearing) to kern and position multi-line paragraphs in 3D world space.
+- **Client-side Generation**: Parses `.ttf` and `.otf` data dynamically using `opentype.js` to compute curve layouts and spatial binning locally.
+- **Binary Format**: Serializes curves and bin maps to `.sluggish` file payloads for cache delivery.
+- **Instanced Rendering**: Passes coordinate frames and glyph indexing variables to WebGL vertex attributes backends.
+- **Typography Alignment**: Iterates layout structures utilizing metric scalars mapping direct width increments.
 
 ## Usage
 
@@ -27,7 +27,7 @@ Unlike traditional MSDF (Multi-Channel Signed Distance Field) font rendering whi
 
 ## Credits & Acknowledgements
 
-*   **Eric Lengyel** for inventing the groundbreaking [Slug Algorithm](http://sluglibrary.com/).
+*   **Eric Lengyel** for the [Slug Algorithm](http://sluglibrary.com/).
 *   **The Sluggish C++ Port** for providing the architectural reference for mapping Slug textures directly to generic WebGL buffer pipelines.
 *   **[opentype.js](https://github.com/opentypejs/opentype.js)** for providing the native Javascript TrueType parsing core.
 *   Ported to Javascript and Three.js by **[manthrax](https://github.com/manthrax)**.
