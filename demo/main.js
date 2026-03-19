@@ -277,6 +277,7 @@ function createTextMesh() {
             map: gridTex
         });
         material.defines = { SLUG_MODELSPACE_UV: '' };
+        material.needsUpdate = true;
     }
 
     let newSlugMesh = new THREE.Mesh(geometry, material);

@@ -140,9 +140,7 @@ const slug_vertex = `
     vTexCoords = position.xy * 0.5 + 0.5;
 
     #ifdef SLUG_MODELSPACE_UV
-    #ifdef USE_UV
     vUv = transformed.xy;
-    #endif
     #endif
 
     vGlyphBandScale = aGlyphBandScale;
