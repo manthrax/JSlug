@@ -144,7 +144,9 @@ const slug_vertex = `
     vUv = transformed.xy;
     #endif
     #ifdef USE_MAP
-    vMapUv = ( mapTransform * vec3( transformed.xy, 1.0 ) ).xy;
+    
+    
+    vMapUv = vTexCoords;//( mapTransform * vec3( transformed.xy, 1.0 ) ).xy;
     #endif
     #endif
 
