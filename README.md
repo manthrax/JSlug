@@ -1,8 +1,15 @@
+
+
 # JSlug: Three.js Font Rendering Pipeline
 
 JSlug is a Javascript and WebGL port of Eric Lengyel's **Slug** font rendering algorithm, implemented for **Three.js**.
 
 Unlike traditional MSDF (Multi-Channel Signed Distance Field) font rendering which can suffer from corner rounding and texture resolution limits, the Slug algorithm evaluates the quadratic bezier curves of the TrueType font directly within the fragment shader. This enables resolution-independent font rendering, sharp corners, and precise anti-aliasing.
+
+## Screenshots
+
+![JSlug Rendering Demo](screenshot.png)
+
 
 ## Features
 
@@ -17,10 +24,6 @@ Unlike traditional MSDF (Multi-Channel Signed Distance Field) font rendering whi
 2. Open `demo/index.html`.
 3. Use the UI to load a standard `.ttf` file. The Javascript generator will parse the curves, initialize the GPU textures, and render the text mesh.
 4. (Optional) Click **Download .sluggish** to cache the generated font data to a serialized binary.
-
-## Screenshots
-
-![JSlug Rendering Demo](screenshot.png)
 
 ## Credits & Acknowledgements
 
