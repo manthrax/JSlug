@@ -1,6 +1,3 @@
-// 漢字 ॐ ♞ ♠ ♡ ♢ ♣ ☻ ☼ 🎵 🚀 (Demonstrating generic Unicode vectors)
-
-// ✌️🌴🐢🐐🍄⚽🍻👑📸😬👀🚨🏡🕊️🏆😻🌟🧿🍀🎨🍜
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -9,6 +6,9 @@ import { SlugMaterial } from '../src/SlugMaterial.js';
 import { SlugGeometry } from '../src/SlugGeometry.js';
 import { SlugGenerator } from '../src/SlugGenerator.js';
 
+// Only handles some generic unicode:
+// 漢字 ॐ ♞ ♠ ♡ ♢ ♣ ☻ ☼ 🎵 🚀 (Demonstrating generic Unicode vectors)
+// ✌️🌴🐢🐐🍄⚽🍻👑📸😬👀🚨🏡🕊️🏆😻🌟🧿🍀🎨🍜
 
 
 let camera, scene, renderer;
@@ -33,15 +33,11 @@ function init() {
 
     scene = new THREE.Scene();
 
-    // Add a basic cube to verify scene/camera is working
-
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.target.copy(camera.position);
     controls.target.z = -1;
     window.addEventListener('resize', onWindowResize);
-
-
 
     document.getElementById('fileSluggish').addEventListener('change', handleSluggishUpload);
     document.getElementById('fileTtf').addEventListener('change', handleTtfUpload);
