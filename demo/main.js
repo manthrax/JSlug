@@ -234,15 +234,19 @@ function createTextMesh() {
     canvas.width = 128;
     canvas.height = 128;
     const ctx = canvas.getContext('2d');
+    
+    // Draw highly contrasting 2x2 Checkerboard 
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 128, 128);
-    ctx.strokeStyle = '#000000'; ctx.lineWidth = 10;
-    ctx.strokeRect(0, 0, 128, 128);
-    ctx.font = '700 80px sans-serif'; ctx.fillStyle = '#ff0000'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('+', 64, 64);
+    ctx.fillStyle = '#ee0088'; // Vibrant magenta for clear grid inspection
+    ctx.fillRect(0, 0, 64, 64);
+    ctx.fillRect(64, 64, 64, 64);
+
     const gridTex = new THREE.CanvasTexture(canvas);
     gridTex.wrapS = THREE.RepeatWrapping;
     gridTex.wrapT = THREE.RepeatWrapping;
-    gridTex.repeat.set(.1, .1); // Since modelspace values are often in hundreds, lower repeat to scale appropriately
+    gridTex.repeat.set(.1, .1); 
+    gridTex.magFilter = THREE.NearestFilter;
+    gridTex.minFilter = THREE.NearestFilter;
 
 
 
@@ -319,8 +323,8 @@ function animate() {
             }
         }
         if (slugMesh.material.map) {
-            let st = 10.1 + (Math.sin(performance.now() / 1000) * 4.5);
-            slugMesh.material.map.repeat.set(st, st)
+            //let st = 1.1 + (Math.sin(performance.now() / 1000) * .5);
+            //slugMesh.material.map.repeat.set(st, st)
         }
 
         const glitchCheckbox = document.getElementById('matrixGlitch');
