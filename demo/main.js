@@ -29,20 +29,16 @@ function init() {
 
     // Swap to Perspective camera to fly around
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
-    camera.position.set(0, 0, 2000);
+    camera.position.set(207, -126, 350);
 
     scene = new THREE.Scene();
 
     // Add a basic cube to verify scene/camera is working
-    const debugCube = new THREE.Mesh(
-        new THREE.BoxGeometry(100, 100, 100),
-        new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true })
-    );
-    scene.add(debugCube);
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-
+    controls.target.copy(camera.position);
+    controls.target.z = -1;
     window.addEventListener('resize', onWindowResize);
 
 
@@ -68,8 +64,27 @@ function init() {
         })
         .catch(err => console.error("Could not load main.js for textarea", err));
 
-    // Load default DejaVuSansMono font
-    loadFont('DejaVuSansMono.ttf');
+    // Dynamically populate font select from index
+    const select = document.getElementById('fontSelect');
+    fetch('./fonts/fonts.json')
+        .then(r => r.json())
+        .then(fonts => {
+            fonts.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.innerText = f.replace(/\.[^/.]+$/, "");
+                select.appendChild(opt);
+            });
+            if (select.children.length > 0) {
+                loadFont(select.value);
+            } else {
+                loadFont('DejaVuSansMono.ttf');
+            }
+        })
+        .catch(err => {
+            console.error("Could not load fonts.json list:", err);
+            loadFont('DejaVuSansMono.ttf'); // Fallback
+        });
 }
 
 async function loadFont(fontName) {
