@@ -311,15 +311,15 @@ export class SlugGenerator {
             codePoints: map,
             curvesTex: curvesTex,
             bandsTex: bandsTex,
-            ascender: font.ascender,
-            descender: font.descender,
-            lineGap: font.lineGap,
-            unitsPerEm: font.unitsPerEm,
+            ascender: font.ascender || 0,
+            descender: font.descender || 0,
+            lineGap: font.lineGap || 0,
+            unitsPerEm: font.unitsPerEm || 0,
             _raw: { codePoints, curvesList, bandOffsets, curveOffsets, metrics: {
-                ascender: font.ascender,
-                descender: font.descender,
-                lineGap: font.lineGap,
-                unitsPerEm: font.unitsPerEm
+                ascender: font.ascender || 0,
+                descender: font.descender || 0,
+                lineGap: font.lineGap || 0,
+                unitsPerEm: font.unitsPerEm || 0
             } }
         };
     }

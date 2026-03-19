@@ -96,6 +96,7 @@ export class SlugLoader {
             lineGap = dataView.getInt32(offset, true); offset += 4;
             unitsPerEm = dataView.getInt32(offset, true); offset += 4;
         }
+        console.log("SlugLoader Metrics read:", { ascender, descender, lineGap, unitsPerEm, offset, bufferLen: buffer.byteLength });
 
         const curvesTex = new THREE.DataTexture(curvesData, curvesTexWidth, curvesTexHeight, THREE.RGBAFormat, THREE.FloatType);
         curvesTex.internalFormat = 'RGBA32F';

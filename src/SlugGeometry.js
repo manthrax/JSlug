@@ -143,8 +143,12 @@ export class SlugGeometry extends THREE.InstancedBufferGeometry {
     }
 
     addText(text, slugData, options = {}) {
+        const ascender = slugData.ascender || 0;
+        const descender = slugData.descender || 0;
+        const lineGap = slugData.lineGap || 0;
+
         const defaultLineHeight = slugData.unitsPerEm > 0
-            ? (slugData.ascender - slugData.descender + slugData.lineGap)
+            ? (ascender - descender + lineGap)
             : 2000;
 
         const {
