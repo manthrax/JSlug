@@ -138,10 +138,13 @@ flat out uvec4 vBandMaxTexCoords;
 const slug_vertex = `
     vec3 transformed = vec3( position.xy * aScaleBias.xy + aScaleBias.zw, 0.0 );
     vTexCoords = position.xy * 0.5 + 0.5;
-
+    
     #ifdef SLUG_MODELSPACE_UV
     #ifdef USE_UV
     vUv = transformed.xy;
+    #endif
+    #ifdef USE_MAP
+    vMapUv = ( mapTransform * vec3( transformed.xy, 1.0 ) ).xy;
     #endif
     #endif
 
@@ -164,7 +167,7 @@ export function injectSlug(target, ...args) {
             slugData._depthMaterial = new THREE.MeshDepthMaterial({ side: THREE.DoubleSide });
             injectSlug(slugData._depthMaterial, slugData);
         }
-        
+
         if (!slugData._distanceMaterial) {
             slugData._distanceMaterial = new THREE.MeshDistanceMaterial({ side: THREE.DoubleSide });
             injectSlug(slugData._distanceMaterial, slugData);
@@ -180,9 +183,9 @@ export function injectSlug(target, ...args) {
     const slugData = args[0];
 
     if (material.userData && material.userData.slugInjected) return; // Prevent redundant native macro splicing
-    
+
     material.transparent = true;
-    material.alphaTest = 0.01;  
+    material.alphaTest = 0.01;
 
     material.onBeforeCompile = (shader) => {
         shader.uniforms.curvesTex = { value: slugData.curvesTex };
@@ -206,7 +209,14 @@ export function injectSlug(target, ...args) {
         shader.fragmentShader = shader.fragmentShader.replace(
             '#include <alphatest_fragment>',
             `
+#if 0
+#ifdef USE_UV
             diffuseColor.rgb = vec3(fract(vUv), 0.0);
+#endif
+#ifdef USE_MAP
+            diffuseColor.rgb = vec3(fract(vMapUv), 0.0);
+#endif
+#endif
             ` + slug_fragment_standard + '\n#include <alphatest_fragment>'
         );
     };

@@ -242,7 +242,7 @@ function createTextMesh() {
     const gridTex = new THREE.CanvasTexture(canvas);
     gridTex.wrapS = THREE.RepeatWrapping;
     gridTex.wrapT = THREE.RepeatWrapping;
-    gridTex.repeat.set(0.01, 0.01); // Since modelspace values are often in hundreds, lower repeat to scale appropriately
+    gridTex.repeat.set(.1, .1); // Since modelspace values are often in hundreds, lower repeat to scale appropriately
 
 
 
@@ -271,8 +271,8 @@ function createTextMesh() {
     } else {
         material = new THREE.MeshStandardMaterial({
             color: 0xffffff,//0x00aaff,     // Golden yellow
-            roughness: 0.3,      // Pure diffuse plastic surface to properly scatter un-angled SpotLight luminance
-            metalness: 0.1,      // Removing metalness prevents the flat quads from reflecting the void into a dark mirror
+            roughness: 0.1,      // Pure diffuse plastic surface to properly scatter un-angled SpotLight luminance
+            metalness: 0.05,      // Removing metalness prevents the flat quads from reflecting the void into a dark mirror
             side: THREE.DoubleSide,
             map: gridTex
         });
@@ -317,6 +317,10 @@ function animate() {
             if (slugMesh.position.y > 1500) {
                 slugMesh.position.y -= 1000;
             }
+        }
+        if (slugMesh.material.map) {
+            let st = 10.1 + (Math.sin(performance.now() / 1000) * 4.5);
+            slugMesh.material.map.repeat.set(st, st)
         }
 
         const glitchCheckbox = document.getElementById('matrixGlitch');
