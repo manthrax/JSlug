@@ -28,7 +28,6 @@ function init() {
     renderer.setClearColor(0x000000, 1.0); // Pure black background
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
-    renderer.shadowMap.samples = 4;
     document.body.appendChild(renderer.domElement);
 
     // Swap to Perspective camera to fly around
