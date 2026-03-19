@@ -20,7 +20,6 @@ Unlike traditional MSDF (Multi-Channel Signed Distance Field) font rendering whi
 
 ## Screenshots
 
-*(User: Add a screenshot here!)*
 ![JSlug Rendering Demo](screenshot.png)
 
 ## Credits & Acknowledgements
