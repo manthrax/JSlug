@@ -66,6 +66,44 @@ new SlugLoader().load('path/to/font.sluggish', (slugData) => {
 });
 ```
 
+### Alternative: Live `.ttf` Parsing (No offline conversion needed)
+
+If you have a raw `.ttf` font file and want to render it instantly without pre-packing a `.sluggish` binary offline, you can use the `SlugGenerator` directly inside your client loops!
+
+```javascript
+import * as THREE from 'three';
+import { SlugGenerator, SlugGeometry, injectSlug } from 'three-slug';
+
+// 1. Initialize the Live Generator
+const generator = new SlugGenerator();
+
+generator.generateFromUrl('path/to/font.ttf').then((slugData) => {
+    
+    const geometry = new SlugGeometry(1000); // specify max glyph capacity
+    
+    const material = new THREE.MeshStandardMaterial({
+        color: 0xff4400,
+        roughness: 1.0,
+        metalness: 0.0,
+        side: THREE.DoubleSide
+    });
+
+    const slugMesh = new THREE.Mesh(geometry, material);
+    injectSlug(slugMesh, material, slugData);
+    
+    geometry.addText('Live .TTF Rendering!', slugData, {
+        fontScale: 0.4,
+        justify: 'left'
+    });
+
+    slugMesh.castShadow = true;
+    scene.add(slugMesh);
+});
+```
+
+> [!TIP]
+> **Performance Guideline:** For production, pre-compiling fonts into `.sluggish` is highly recommended! It removes `opentype.js` heavy calculation streams that load client parses and reduces loading buffers dramatically!
+
 ## Usage
 
 1. Serve the repository locally (e.g., `npx http-server`).
