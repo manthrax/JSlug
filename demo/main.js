@@ -50,8 +50,8 @@ function init() {
     spotLight.castShadow = true;
     spotLight.shadow.bias = -0.0001; // Tiny absolute depth offset to kill shadow acne
     spotLight.shadow.normalBias = 0.05; // Slightly push the intersection along the normal
-    spotLight.shadow.mapSize.width = 2048;
-    spotLight.shadow.mapSize.height = 2048;
+    spotLight.shadow.mapSize.width = 1024;
+    spotLight.shadow.mapSize.height = 1024;
     spotLight.shadow.camera.near = 10;
     spotLight.shadow.camera.far = 2000;
     scene.add(spotLight);
