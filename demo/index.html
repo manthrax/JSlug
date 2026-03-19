@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slug Font Rendering Three.js</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #004040; color: white; font-family: sans-serif; }
+        #ui { position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; }
+        button, input { margin-bottom: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <h3>Slug - Three.js</h3>
+        <div>
+            <label>Load .sluggish file:</label><br>
+            <input type="file" id="fileSluggish" accept=".sluggish">
+        </div>
+        <hr>
+        <div>
+            <label>Load .ttf font:</label><br>
+            <input type="file" id="fileTtf" accept=".ttf"><br>
+            <button id="btnDownload">Download .sluggish</button>
+        </div>
+    </div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/",
+                "opentype.js": "https://unpkg.com/opentype.js@1.3.4/dist/opentype.module.js"
+            }
+        }
+    </script>
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
