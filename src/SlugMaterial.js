@@ -138,6 +138,13 @@ flat out uvec4 vBandMaxTexCoords;
 const slug_vertex = `
     vec3 transformed = vec3( position.xy * aScaleBias.xy + aScaleBias.zw, 0.0 );
     vTexCoords = position.xy * 0.5 + 0.5;
+
+    #ifdef SLUG_MODELSPACE_UV
+    #ifdef USE_UV
+    vUv = transformed.xy;
+    #endif
+    #endif
+
     vGlyphBandScale = aGlyphBandScale;
     vBandMaxTexCoords = uvec4(aBandMaxTexCoords);
 `;

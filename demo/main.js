@@ -228,7 +228,7 @@ function createTextMesh() {
 
     const useRawFallback = document.getElementById('useRawShader').checked;
     let material;
- 
+
     // Create a procedural grid texture to test local UV-mapping layout support
     const canvas = document.createElement('canvas');
     canvas.width = 128;
@@ -242,6 +242,7 @@ function createTextMesh() {
     const gridTex = new THREE.CanvasTexture(canvas);
     gridTex.wrapS = THREE.RepeatWrapping;
     gridTex.wrapT = THREE.RepeatWrapping;
+    gridTex.repeat.set(0.01, 0.01); // Since modelspace values are often in hundreds, lower repeat to scale appropriately
 
 
 
@@ -269,12 +270,13 @@ function createTextMesh() {
         // No custom shadow material for raw shader fallback
     } else {
         material = new THREE.MeshStandardMaterial({
-            color: 0x00aaff,     // Golden yellow
+            color: 0xffffff,//0x00aaff,     // Golden yellow
             roughness: 0.3,      // Pure diffuse plastic surface to properly scatter un-angled SpotLight luminance
             metalness: 0.1,      // Removing metalness prevents the flat quads from reflecting the void into a dark mirror
             side: THREE.DoubleSide,
             map: gridTex
         });
+        material.defines = { SLUG_MODELSPACE_UV: '' };
     }
 
     let newSlugMesh = new THREE.Mesh(geometry, material);
