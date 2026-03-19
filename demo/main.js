@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { SlugLoader } from '../src/SlugLoader.js';
-import { SlugMaterial } from '../src/SlugMaterial.js';
+import { SlugMaterial, injectSlug } from '../src/SlugMaterial.js';
 import { SlugGeometry } from '../src/SlugGeometry.js';
 import { SlugGenerator } from '../src/SlugGenerator.js';
 
@@ -14,6 +14,9 @@ import { SlugGenerator } from '../src/SlugGenerator.js';
 let camera, scene, renderer;
 let controls;
 let slugMesh;
+let spotLight;
+let pointLight;
+let debugCube;
 let loadedData = null;
 let loadedFileName = 'font';
 
@@ -21,10 +24,12 @@ init();
 animate();
 
 function init() {
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 1.0); // Pure black background
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
     // Swap to Perspective camera to fly around
@@ -32,6 +37,53 @@ function init() {
     camera.position.set(307, -500, 400);
 
     scene = new THREE.Scene();
+
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.2); // Very low ambient to keep shadows dark
+    scene.add(ambientLight);
+
+    // Extreme intensity for high contrast, positioned head-on to cast perfectly square shadows onto the backend plane
+    spotLight = new THREE.SpotLight(0xffffff, 5000000.0);
+    spotLight.position.set(0, 0, 800);
+    spotLight.angle = Math.PI / 4;
+    spotLight.penumbra = 0.5;
+    spotLight.decay = 2.0;
+    spotLight.distance = 3000;
+    spotLight.castShadow = true;
+    spotLight.shadow.bias = -0.0001; // Tiny absolute depth offset to kill shadow acne
+    spotLight.shadow.normalBias = 0.05; // Slightly push the intersection along the normal
+    spotLight.shadow.mapSize.width = 2048;
+    spotLight.shadow.mapSize.height = 2048;
+    spotLight.shadow.camera.near = 10;
+    spotLight.shadow.camera.far = 2000;
+    scene.add(spotLight);
+
+    // Explicitly add target so Three.js auto-updates its matrices
+    spotLight.target.position.set(0, 0, -100);
+    scene.add(spotLight.target);
+
+    const planeGeometry = new THREE.PlaneGeometry(10000, 10000);
+    const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.position.z = -10; // Moved explicitly further back so depth bounds are 100% unambiguous in shadow map
+    plane.receiveShadow = true;
+    scene.add(plane);
+
+    // Floating Debug Cube to cast shadows on text
+    const cubeGeo = new THREE.BoxGeometry(20, 20, 20);
+    const cubeMat = new THREE.MeshStandardMaterial({ color: 0xff3333, roughness: 0.1 });
+    debugCube = new THREE.Mesh(cubeGeo, cubeMat);
+    debugCube.position.set(0, 0, 50);
+    debugCube.castShadow = true;
+    scene.add(debugCube);
+
+    // Small blue point light that orbits the debug cube
+    pointLight = new THREE.PointLight(0x00aaff, 200000.0, 2500); // Increased intensity + reach radius
+    const bulbGeo = new THREE.SphereGeometry(10, 16, 8); // Larger visible sphere
+    const bulbMat = new THREE.MeshBasicMaterial({ color: 0x00aaff });
+    pointLight.add(new THREE.Mesh(bulbGeo, bulbMat));
+    pointLight.castShadow = true;
+    pointLight.shadow.bias = -0.0001;
+    scene.add(pointLight);
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -47,6 +99,14 @@ function init() {
 
     document.getElementById('fontSelect').addEventListener('change', (e) => {
         loadFont(e.target.value);
+    });
+
+    document.getElementById('textInput').addEventListener('input', () => {
+        if (loadedData) createTextMesh();
+    });
+
+    document.getElementById('useRawShader').addEventListener('change', () => {
+        if (loadedData) createTextMesh();
     });
 
     // Prepopulate textarea with our own source code to demonstrate large paragraphs
@@ -163,10 +223,34 @@ function createTextMesh() {
         slugMesh.material.dispose();
     }
 
-    const material = new SlugMaterial({
-        curvesTex: loadedData.curvesTex,
-        bandsTex: loadedData.bandsTex
-    });
+    const useRawFallback = document.getElementById('useRawShader').checked;
+    let material, depthMaterial, distanceMaterial;
+
+    if (useRawFallback) {
+        material = new SlugMaterial({
+            curvesTex: loadedData.curvesTex,
+            bandsTex: loadedData.bandsTex
+        });
+        // No custom shadow material for raw shader fallback
+    } else {
+        material = new THREE.MeshStandardMaterial({
+            color: 0xffcc00,     // Golden yellow
+            roughness: 1.0,      // Pure diffuse plastic surface to properly scatter un-angled SpotLight luminance
+            metalness: 0.0,      // Removing metalness prevents the flat quads from reflecting the void into a dark mirror
+            side: THREE.DoubleSide
+        });
+        injectSlug(material, loadedData);
+
+        depthMaterial = new THREE.MeshDepthMaterial({
+            side: THREE.DoubleSide
+        });
+        injectSlug(depthMaterial, loadedData);
+
+        distanceMaterial = new THREE.MeshDistanceMaterial({
+            side: THREE.DoubleSide
+        });
+        injectSlug(distanceMaterial, loadedData);
+    }
 
     const textToRender = document.getElementById('textInput').value;
 
@@ -176,49 +260,23 @@ function createTextMesh() {
 
     geometry.clear();
 
-    const fontScale = 0.5; // Global scaling factor to bring 1000-2048 UnitsPerEm down to reasonable world coords
-    const lineHeight = 2000 * fontScale;
-    let x = -1000;
-    let startX = x;
-    let y = 500;
-
-    let i = 0;
-    while (i < textToRender.length) {
-        if (textToRender[i] === '\n') {
-            x = startX;
-            y -= lineHeight;
-            i++;
-            continue;
-        }
-
-        const charCode = textToRender.codePointAt(i);
-        // Step by 2 if it's a surrogate pair
-        i += charCode > 0xFFFF ? 2 : 1;
-
-        let data = loadedData.codePoints.get(charCode);
-        if (!data) {
-            data = loadedData.codePoints.get(-1); // .notdef fallback!
-        }
-
-        if (data) {
-            if (data.width > 0 && data.height > 0) {
-                const quadW = data.width * fontScale;
-                const quadH = data.height * fontScale;
-                const px = x + data.bearingX * fontScale;
-                const py = y + data.bearingY * fontScale;
-
-                geometry.addGlyph(data, px, py, quadW, quadH, window.innerWidth, window.innerHeight);
-            }
-            x += data.advanceWidth * fontScale;
-        } else if (textToRender[i] === ' ') {
-            x += 600 * fontScale;
-        }
-    }
-
-    geometry.updateBuffers();
+    geometry.addText(textToRender, loadedData, {
+        fontScale: 0.5,
+        startX: -1000,
+        startY: 500,
+        justify: 'left'
+    });
 
     slugMesh = new THREE.Mesh(geometry, material);
-    // Disabling frustum culling since bounds aren't calculated for the instanced geometry
+
+    if (depthMaterial) slugMesh.customDepthMaterial = depthMaterial;
+    if (distanceMaterial) slugMesh.customDistanceMaterial = distanceMaterial;
+
+    // Let Three.js dynamically build the Depth Material derived from our onBeforeCompile graph instead of forcing custom
+    slugMesh.castShadow = true;
+    slugMesh.receiveShadow = true;
+
+    // Disabling frustum culling temporally to purely isolate WebGL shadow buffer pipelines
     slugMesh.frustumCulled = false;
     slugMesh.scale.multiplyScalar(.01);
     scene.add(slugMesh);
@@ -234,14 +292,25 @@ function animate() {
     requestAnimationFrame(animate);
 
     // Star Wars Title Crawl
-    if (camera && controls) {
-        const speed = 1.0;
-        camera.position.y -= speed;
-        controls.target.y -= speed;
-        if (camera.position.y < -2800) {
-            controls.target.y -= camera.position.y;
-            camera.position.y += 2400;
-            controls.target.y += camera.position.y;
+    if (slugMesh) {
+        const speed = .2;
+        slugMesh.position.y += speed;
+        if (slugMesh.position.y > 2800) {
+            slugMesh.position.y = -2400;
+        }
+    }
+
+    if (debugCube) {
+        // Keep debug cube visible in frame and spinning wildly
+        debugCube.position.y = 50;
+        debugCube.position.x = Math.sin(Date.now() * 0.001) * 300;
+        debugCube.rotation.x += 0.01;
+        debugCube.rotation.y += 0.02;
+
+        if (pointLight) {
+            pointLight.position.x = debugCube.position.x + Math.cos(Date.now() * 0.0015) * 300;
+            pointLight.position.y = debugCube.position.y + Math.sin(Date.now() * 0.0015) * 300;
+            pointLight.position.z = debugCube.position.z + Math.cos(Date.now() * 0.001) * 150;
         }
     }
 

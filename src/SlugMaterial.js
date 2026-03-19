@@ -1,17 +1,12 @@
 import * as THREE from 'three';
-import { SlugLoader } from '../src/SlugLoader.js';
 
-const SLUG_PIXEL_SHADER = `
-precision highp float;
+const slug_pars_fragment = `
 precision highp int;
 precision highp usampler2D;
-
 
 in vec2 vTexCoords;
 flat in vec4 vGlyphBandScale;
 flat in uvec4 vBandMaxTexCoords;
-
-out vec4 fragColor;
 
 uniform sampler2D curvesTex;
 uniform usampler2D bandsTex;
@@ -95,11 +90,19 @@ float TraceRayBandV(uvec2 bandData, float pixelsPerEm)
     }
     return coverage;
 }
+`;
 
-void main()
-{
-    vec2 pixelsPerEm = vec2(1.0 / fwidth(vTexCoords.x), 1.0 / fwidth(vTexCoords.y));
+const slug_fragment_core = `
+    vec2 fdx = dFdx(vTexCoords);
+    vec2 fdy = dFdy(vTexCoords);
+    // Modern WebGL GPUs legally return 0.0 for fragment derivatives inside colorless Depth-Only passes!
+    // A strict mechanical floor guarantees we never divide-by-zero -> Infinity.
+    vec2 fw = max(max(abs(fdx), abs(fdy)), vec2(0.000001));
+    vec2 pixelsPerEm = vec2(1.0 / fw.x, 1.0 / fw.y);
 
+    // Shadow cameras evaluate text at a sub-pixel size and the algorithm aggressively culls it into alpha 0.0.
+    // Clamping to a high resolution floor forces solid strokes when drawn locally into a shadow mapping buffer!
+    pixelsPerEm = clamp(pixelsPerEm, vec2(1.0), vec2(200.0));
 
     uvec2 bandIndex = uvec2(clamp(uvec2(vTexCoords * bandScale), uvec2(0U, 0U), bandMax));
 
@@ -114,49 +117,100 @@ void main()
 
     coverageX = min(abs(coverageX), 1.0);
     coverageY = min(abs(coverageY), 1.0);
-    float alpha = (coverageX + coverageY) * 0.5;
-    fragColor = vec4(1.0, 0.8, 0.0, alpha); // Solid yellow text
-}
+    float slugAlpha = (coverageX + coverageY) * 0.5;
 `;
 
-const SLUG_VERTEX_SHADER = `
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
+const slug_fragment_standard = slug_fragment_core + `
+    diffuseColor.a *= slugAlpha;
+    if ( diffuseColor.a < 0.0001 ) discard;
+`;
 
-layout (location = 0) in vec2 position;
-layout (location = 1) in vec2 uv;
-layout (location = 2) in vec4 aScaleBias;
-
-layout (location = 3) in vec4 aGlyphBandScale;
-layout (location = 4) in vec4 aBandMaxTexCoords;
+const slug_pars_vertex = `
+in vec4 aScaleBias;
+in vec4 aGlyphBandScale;
+in vec4 aBandMaxTexCoords;
 
 out vec2 vTexCoords;
 flat out vec4 vGlyphBandScale;
 flat out uvec4 vBandMaxTexCoords;
+`;
 
-void main()
-{
-    vec2 worldPos = position * aScaleBias.xy + aScaleBias.zw;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(worldPos, 0.0, 1.0);
-    vTexCoords = uv;
+const slug_vertex = `
+    vec3 transformed = vec3( position.xy * aScaleBias.xy + aScaleBias.zw, 0.0 );
+    vTexCoords = position.xy * 0.5 + 0.5;
     vGlyphBandScale = aGlyphBandScale;
     vBandMaxTexCoords = uvec4(aBandMaxTexCoords);
+`;
+
+export function injectSlug(material, slugData) {
+    material.transparent = false;//true;
+    material.alphaTest = 0.5; // Trigger alphatest insertion natively in shadows too
+
+    material.onBeforeCompile = (shader) => {
+        shader.uniforms.curvesTex = { value: slugData.curvesTex };
+        shader.uniforms.bandsTex = { value: slugData.bandsTex };
+
+        shader.vertexShader = shader.vertexShader.replace(
+            '#include <clipping_planes_pars_vertex>',
+            '#include <clipping_planes_pars_vertex>\n' + slug_pars_vertex
+        );
+
+        shader.vertexShader = shader.vertexShader.replace(
+            '#include <begin_vertex>',
+            slug_vertex
+        );
+
+        shader.fragmentShader = shader.fragmentShader.replace(
+            '#include <clipping_planes_pars_fragment>',
+            '#include <clipping_planes_pars_fragment>\n' + slug_pars_fragment
+        );
+
+        shader.fragmentShader = shader.fragmentShader.replace(
+            '#include <alphatest_fragment>',
+            slug_fragment_standard + '\n#include <alphatest_fragment>'
+        );
+    };
+
+    // Also attach to userData so we can clone easily or reference
+    material.userData.slugData = slugData;
+}
+
+const SLUG_RAW_PIXEL_SHADER = `
+precision highp float;
+${slug_pars_fragment}
+
+out vec4 fragColor;
+
+void main() {
+${slug_fragment_core}
+    fragColor = vec4(1.0, 0.8, 0.0, slugAlpha); // Solid yellow fallback text
+}
+`;
+
+const SLUG_RAW_VERTEX_SHADER = `
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+in vec2 position;
+${slug_pars_vertex}
+void main() {
+${slug_vertex}
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
 }
 `;
 
 export class SlugMaterial extends THREE.RawShaderMaterial {
     constructor(parameters = {}) {
         super({
-            vertexShader: SLUG_VERTEX_SHADER,
-            fragmentShader: SLUG_PIXEL_SHADER,
+            vertexShader: SLUG_RAW_VERTEX_SHADER,
+            fragmentShader: SLUG_RAW_PIXEL_SHADER,
             uniforms: {
                 curvesTex: { value: null },
                 bandsTex: { value: null }
             },
             transparent: true,
             blending: THREE.NormalBlending,
-            depthTest: false,
-            depthWrite: false,
+            //depthTest: false,
+            //depthWrite: false,
             side: THREE.DoubleSide,
             glslVersion: THREE.GLSL3 // We need WebGL2 / GLSL3 for texelFetch, usampler2D, flat in uvec4
         });
@@ -165,3 +219,4 @@ export class SlugMaterial extends THREE.RawShaderMaterial {
         if (parameters.bandsTex) this.uniforms.bandsTex.value = parameters.bandsTex;
     }
 }
+
