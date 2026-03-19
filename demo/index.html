@@ -14,6 +14,16 @@
     <div id="ui">
         <h3>Slug - Three.js</h3>
         <div>
+            <label>Select Font:</label><br>
+            <select id="fontSelect" style="width: 100%; margin-bottom: 10px; padding: 5px; background: #333; color: #fff; border: 1px solid #555;">
+                <option value="DejaVuSansMono.ttf">DejaVu Sans Mono</option>
+                <option value="NotoColorEmoji-Regular.ttf">Noto Color Emoji (COLR)</option>
+                <option value="Roboto-VariableFont_wdth,wght.ttf">Roboto</option>
+                <option value="SpaceMono-Regular.ttf">Space Mono</option>
+            </select>
+        </div>
+        <hr>
+        <div>
             <label>Load .sluggish file:</label><br>
             <input type="file" id="fileSluggish" accept=".sluggish">
         </div>
@@ -22,6 +32,12 @@
             <label>Load .ttf font:</label><br>
             <input type="file" id="fileTtf" accept=".ttf"><br>
             <button id="btnDownload">Download .sluggish</button>
+        </div>
+        <hr>
+        <div>
+            <label>Text to Render:</label><br>
+            <textarea id="textInput" rows="4" style="width: 100%; box-sizing: border-box; background: #222; color: #fff; border: 1px solid #444; padding: 5px;">The quick brown fox jumps over the lazy dog.
+SLUG!</textarea>
         </div>
     </div>
     

@@ -34,17 +34,32 @@ export class SlugGenerator {
         let bandsTexCurveOffsets = []; // 2 per curve [curveX, curveY]
         let codePointsData = [];
         
-        let minCodePoint = 33;
-        let maxCodePoint = 126;
-
-        for (let cp = minCodePoint; cp <= maxCodePoint; cp++) {
-            const glyph = font.charToGlyph(String.fromCharCode(cp));
+        for (let i = 0; i < font.glyphs.length; i++) {
+            const glyph = font.glyphs.get(i);
+            let cp = glyph.unicode;
+            if (cp === undefined) {
+                if (i === 0) cp = -1; // .notdef fallback glyph
+                else continue;
+            }
             const path = glyph.path; // ONLY use raw font-space unstretched paths to match getBoundingBox() perfectly!
 
             // Determine visible bounding box in font units
             const bbox = glyph.getBoundingBox();
             if (bbox.x1 === bbox.x2 || bbox.y1 === bbox.y2) {
-                // Empty glyph (e.g. space) or missing
+                // Empty glyph (e.g. space) or missing - keep it to preserve advanceWidth!
+                codePointsData.push({
+                    codePoint: cp,
+                    width: 0,
+                    height: 0,
+                    advanceWidth: Math.floor(glyph.advanceWidth || 0),
+                    bearingX: 0,
+                    bearingY: 0,
+                    bandCount: 0,
+                    bandDimX: 0,
+                    bandDimY: 0,
+                    bandsTexCoordX: 0,
+                    bandsTexCoordY: 0
+                });
                 continue;
             }
 
@@ -161,7 +176,7 @@ export class SlugGenerator {
 
             const sizeX = 1 + (gx2 - gx1);
             const sizeY = 1 + (gy2 - gy1);
-            let bCount = 1; // Disable banding as per Sluggish reference
+            let bCount = this.bandCount; // Re-enable spatial banding optimizations!
             if (sizeX < bCount || sizeY < bCount) {
                 bCount = Math.floor(Math.min(sizeX, sizeY) / 2);
                 if(bCount < 1) bCount = 1;
@@ -229,6 +244,9 @@ export class SlugGenerator {
                 codePoint: cp,
                 width: Math.floor(gx2 - gx1),
                 height: Math.floor(gy2 - gy1),
+                advanceWidth: Math.floor(glyph.advanceWidth || 0),
+                bearingX: Math.floor(gx1),
+                bearingY: Math.floor(gy1),
                 bandCount: bCount,
                 bandDimX: bandDimX,
                 bandDimY: bandDimY,
@@ -267,12 +285,12 @@ export class SlugGenerator {
         const bandsTexels = Math.floor(bandOffsets.length / 2) + Math.floor(curveOffsets.length / 2);
         const bandsTexHeight = Math.ceil(bandsTexels / TEXTURE_WIDTH);
         
-        let bandsUintArray = new Uint16Array(TEXTURE_WIDTH * bandsTexHeight * 2);
+        let bandsUintArray = new Uint32Array(TEXTURE_WIDTH * bandsTexHeight * 2);
         bandsUintArray.set(bandOffsets, 0);
         bandsUintArray.set(curveOffsets, bandOffsets.length);
 
-        const bandsTex = new THREE.DataTexture(bandsUintArray, TEXTURE_WIDTH, bandsTexHeight, THREE.RGIntegerFormat, THREE.UnsignedShortType);
-        bandsTex.internalFormat = 'RG16UI';
+        const bandsTex = new THREE.DataTexture(bandsUintArray, TEXTURE_WIDTH, bandsTexHeight, THREE.RGIntegerFormat, THREE.UnsignedIntType);
+        bandsTex.internalFormat = 'RG32UI';
         bandsTex.minFilter = THREE.NearestFilter;
         bandsTex.magFilter = THREE.NearestFilter;
         bandsTex.needsUpdate = true;
@@ -298,7 +316,7 @@ export class SlugGenerator {
 
         const bandsTexels = Math.floor(bandOffsets.length / 2) + Math.floor(curveOffsets.length / 2);
         const bandsTexHeight = Math.ceil(bandsTexels / TEXTURE_WIDTH);
-        const bandsUintArray = new Uint16Array(TEXTURE_WIDTH * bandsTexHeight * 2);
+        const bandsUintArray = new Uint32Array(TEXTURE_WIDTH * bandsTexHeight * 2);
         bandsUintArray.set(bandOffsets, 0);
         bandsUintArray.set(curveOffsets, bandOffsets.length);
 
@@ -308,10 +326,11 @@ export class SlugGenerator {
         // CPs: 28 bytes * N
         // Curves: Width(2) + Height(2) + Bytes(4) = 8 bytes + CurvesBytes
         // Bands: Width(2) + Height(2) + Bytes(4) = 8 bytes + BandsBytes
+        // Calculate total size: 40 bytes per code point
         const curvesBytes = curvesFloatArray.byteLength;
         const bandsBytes = bandsUintArray.byteLength;
 
-        const totalBytes = 8 + 2 + (codePoints.length * 28) + 8 + curvesBytes + 8 + bandsBytes;
+        const totalBytes = 8 + 2 + (codePoints.length * 40) + 8 + curvesBytes + 8 + bandsBytes;
         const buffer = new ArrayBuffer(totalBytes);
         const view = new DataView(buffer);
         let offset = 0;
@@ -326,6 +345,9 @@ export class SlugGenerator {
             view.setUint32(offset, cp.codePoint, true); offset += 4;
             view.setUint32(offset, cp.width, true); offset += 4;
             view.setUint32(offset, cp.height, true); offset += 4;
+            view.setUint32(offset, cp.advanceWidth, true); offset += 4;
+            view.setInt32(offset, cp.bearingX, true); offset += 4; // Signed
+            view.setInt32(offset, cp.bearingY, true); offset += 4; // Signed
             view.setUint32(offset, cp.bandCount, true); offset += 4;
             view.setUint32(offset, cp.bandDimX, true); offset += 4;
             view.setUint32(offset, cp.bandDimY, true); offset += 4;

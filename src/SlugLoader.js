@@ -45,14 +45,17 @@ export class SlugLoader {
                 codePoint: dataView.getUint32(offset, true),
                 width: dataView.getUint32(offset + 4, true),
                 height: dataView.getUint32(offset + 8, true),
-                bandCount: dataView.getUint32(offset + 12, true),
-                bandDimX: dataView.getUint32(offset + 16, true),
-                bandDimY: dataView.getUint32(offset + 20, true),
-                bandsTexCoordX: dataView.getUint16(offset + 24, true),
-                bandsTexCoordY: dataView.getUint16(offset + 26, true),
+                advanceWidth: dataView.getUint32(offset + 12, true),
+                bearingX: dataView.getInt32(offset + 16, true),
+                bearingY: dataView.getInt32(offset + 20, true),
+                bandCount: dataView.getUint32(offset + 24, true),
+                bandDimX: dataView.getUint32(offset + 28, true),
+                bandDimY: dataView.getUint32(offset + 32, true),
+                bandsTexCoordX: dataView.getUint16(offset + 36, true),
+                bandsTexCoordY: dataView.getUint16(offset + 38, true),
             };
             codePoints.set(cp.codePoint, cp);
-            offset += 28; // sizeof(SluggishCodePoint) with 1-byte packing in C++
+            offset += 40; // Extended struct in Javascript
         }
 
         const curvesTexWidth = dataView.getUint16(offset, true); offset += 2;
@@ -80,9 +83,9 @@ export class SlugLoader {
         }
 
         const bandsTexels = bandsTexWidth * bandsTexHeight;
-        const bandsData = new Uint16Array(bandsTexels * 2); // RG16UI
+        const bandsData = new Uint32Array(bandsTexels * 2); // RG32UI
         const bandsBuffer = buffer.slice(offset, offset + bandsTexBytes);
-        const incomingBandsData = new Uint16Array(bandsBuffer);
+        const incomingBandsData = new Uint32Array(bandsBuffer);
         bandsData.set(incomingBandsData);
         offset += bandsTexBytes;
 
@@ -92,8 +95,8 @@ export class SlugLoader {
         curvesTex.magFilter = THREE.NearestFilter;
         curvesTex.needsUpdate = true;
 
-        const bandsTex = new THREE.DataTexture(bandsData, bandsTexWidth, bandsTexHeight, THREE.RGIntegerFormat, THREE.UnsignedShortType);
-        bandsTex.internalFormat = 'RG16UI';
+        const bandsTex = new THREE.DataTexture(bandsData, bandsTexWidth, bandsTexHeight, THREE.RGIntegerFormat, THREE.UnsignedIntType);
+        bandsTex.internalFormat = 'RG32UI';
         bandsTex.minFilter = THREE.NearestFilter;
         bandsTex.magFilter = THREE.NearestFilter;
         bandsTex.needsUpdate = true;
