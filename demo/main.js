@@ -301,17 +301,17 @@ function animate() {
         if (glitchCheckbox && glitchCheckbox.checked && loadedData) {
             if (Math.random() < 0.25) { // 25% chance per frame to glitch
                 let currentText = document.getElementById('textInput').value.split('');
-                let numGlitches = Math.floor(Math.random() * 8) + 1;
+                let numGlitches = Math.floor(Math.random() * 1800) + 1;
                 const keys = Array.from(loadedData.codePoints.keys()).filter(k => k > 32); // Exclude space and hidden ones
-                
-                for(let i=0; i < numGlitches; i++) {
+
+                for (let i = 0; i < numGlitches; i++) {
                     let idx = Math.floor(Math.random() * currentText.length);
                     if (currentText[idx] !== '\n' && currentText[idx] !== ' ') {
                         let randomChar = String.fromCodePoint(keys[Math.floor(Math.random() * keys.length)]);
                         currentText[idx] = randomChar;
                     }
                 }
-                
+
                 slugMesh.geometry.clear();
                 slugMesh.geometry.addText(currentText.join(''), loadedData, {
                     fontScale: 0.5,
