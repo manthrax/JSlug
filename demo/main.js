@@ -293,10 +293,13 @@ function animate() {
 
     // Star Wars Title Crawl
     if (slugMesh) {
-        const speed = .2;
-        slugMesh.position.y += speed;
-        if (slugMesh.position.y > 2800) {
-            slugMesh.position.y = -2400;
+        const autoScroll = document.getElementById('autoScroll');
+        if (autoScroll && autoScroll.checked) {
+            const speed = .2;
+            slugMesh.position.y += speed;
+            if (slugMesh.position.y > 2800) {
+                slugMesh.position.y = -2400;
+            }
         }
     }
 

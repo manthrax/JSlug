@@ -143,8 +143,9 @@ const slug_vertex = `
 `;
 
 export function injectSlug(material, slugData) {
-    material.transparent = false;//true;
-    material.alphaTest = 0.5; // Trigger alphatest insertion natively in shadows too
+    material.transparent = true;
+    // Lower alphaTest threshold to safely cast shadows over empty space without prematurely culling soft anti-aliased edges
+    material.alphaTest = 0.01; 
 
     material.onBeforeCompile = (shader) => {
         shader.uniforms.curvesTex = { value: slugData.curvesTex };
