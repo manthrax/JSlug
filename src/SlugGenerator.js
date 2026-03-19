@@ -311,7 +311,16 @@ export class SlugGenerator {
             codePoints: map,
             curvesTex: curvesTex,
             bandsTex: bandsTex,
-            _raw: { codePoints, curvesList, bandOffsets, curveOffsets }
+            ascender: font.ascender,
+            descender: font.descender,
+            lineGap: font.lineGap,
+            unitsPerEm: font.unitsPerEm,
+            _raw: { codePoints, curvesList, bandOffsets, curveOffsets, metrics: {
+                ascender: font.ascender,
+                descender: font.descender,
+                lineGap: font.lineGap,
+                unitsPerEm: font.unitsPerEm
+            } }
         };
     }
 
@@ -340,8 +349,9 @@ export class SlugGenerator {
         // Calculate total size: 40 bytes per code point
         const curvesBytes = curvesFloatArray.byteLength;
         const bandsBytes = bandsUintArray.byteLength;
+        const metrics = generatedData._raw.metrics || { ascender: 0, descender: 0, lineGap: 0, unitsPerEm: 0 };
 
-        const totalBytes = 8 + 2 + (codePoints.length * 40) + 8 + curvesBytes + 8 + bandsBytes;
+        const totalBytes = 8 + 2 + (codePoints.length * 40) + 8 + curvesBytes + 8 + bandsBytes + 16;
         const buffer = new ArrayBuffer(totalBytes);
         const view = new DataView(buffer);
         let offset = 0;
@@ -376,6 +386,13 @@ export class SlugGenerator {
         view.setUint16(offset, bandsTexHeight, true); offset += 2;
         view.setUint32(offset, bandsBytes, true); offset += 4;
         new Uint8Array(buffer).set(new Uint8Array(bandsUintArray.buffer), offset);
+        offset += bandsBytes;
+
+        // Footer Metadata Table (Backward compatible fallback)
+        view.setInt32(offset, metrics.ascender || 0, true); offset += 4;
+        view.setInt32(offset, metrics.descender || 0, true); offset += 4;
+        view.setInt32(offset, metrics.lineGap || 0, true); offset += 4;
+        view.setInt32(offset, metrics.unitsPerEm || 0, true); offset += 4;
 
         return buffer;
     }

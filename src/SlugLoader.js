@@ -89,6 +89,14 @@ export class SlugLoader {
         bandsData.set(incomingBandsData);
         offset += bandsTexBytes;
 
+        let ascender = 0, descender = 0, lineGap = 0, unitsPerEm = 0;
+        if (offset + 16 <= buffer.byteLength) {
+            ascender = dataView.getInt32(offset, true); offset += 4;
+            descender = dataView.getInt32(offset, true); offset += 4;
+            lineGap = dataView.getInt32(offset, true); offset += 4;
+            unitsPerEm = dataView.getInt32(offset, true); offset += 4;
+        }
+
         const curvesTex = new THREE.DataTexture(curvesData, curvesTexWidth, curvesTexHeight, THREE.RGBAFormat, THREE.FloatType);
         curvesTex.internalFormat = 'RGBA32F';
         curvesTex.minFilter = THREE.NearestFilter;
@@ -104,7 +112,11 @@ export class SlugLoader {
         return {
             codePoints: codePoints,
             curvesTex: curvesTex,
-            bandsTex: bandsTex
+            bandsTex: bandsTex,
+            ascender: ascender,
+            descender: descender,
+            lineGap: lineGap,
+            unitsPerEm: unitsPerEm
         };
     }
 }
