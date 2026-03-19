@@ -114,7 +114,8 @@ void main()
 
     coverageX = min(abs(coverageX), 1.0);
     coverageY = min(abs(coverageY), 1.0);
-    fragColor = vec4(1.0, 1.0, 1.0, (coverageX + coverageY) * 0.5);
+    float alpha = (coverageX + coverageY) * 0.5;
+    fragColor = vec4(1.0, 0.8, 0.0, alpha); // Solid yellow text
 }
 `;
 

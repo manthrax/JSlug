@@ -8,8 +8,10 @@ const SLUGGISH_HEADER_DATA = "SLUGGISH";
 const SLUGGISH_HEADER_LEN = 8;
 
 export class SlugGenerator {
-    constructor() {
+    constructor(parameters = {}) {
         this.bandCount = 16;
+        this.fullRange = parameters.fullRange !== undefined ? parameters.fullRange : false;
+        this.whitelist = parameters.whitelist || null; // Array of codepoints to include
     }
 
     async generateFromUrl(url) {
@@ -40,6 +42,15 @@ export class SlugGenerator {
             if (cp === undefined) {
                 if (i === 0) cp = -1; // .notdef fallback glyph
                 else continue;
+            }
+
+            // Optional range filtering to control .sluggish file bloat
+            if (!this.fullRange && i !== 0) {
+                if (this.whitelist) {
+                    if (!this.whitelist.includes(cp)) continue;
+                } else if (cp < 32 || cp > 126) {
+                    continue; // Default to basic printable ASCII only
+                }
             }
             const path = glyph.path; // ONLY use raw font-space unstretched paths to match getBoundingBox() perfectly!
 
