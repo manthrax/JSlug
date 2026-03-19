@@ -108,6 +108,10 @@ function init() {
         if (loadedData) createTextMesh();
     });
 
+    document.getElementById('testMap').addEventListener('change', () => {
+        if (loadedData) createTextMesh();
+    });
+
     document.getElementById('textJustify').addEventListener('change', () => {
         if (loadedData) createTextMesh();
     });
@@ -227,6 +231,7 @@ function createTextMesh() {
     }
 
     const useRawFallback = document.getElementById('useRawShader').checked;
+    const testMapChecked = document.getElementById('testMap').checked;
     let material;
 
     // Create a procedural grid texture to test local UV-mapping layout support
@@ -278,10 +283,13 @@ function createTextMesh() {
             roughness: 0.1,      // Pure diffuse plastic surface to properly scatter un-angled SpotLight luminance
             metalness: 0.05,      // Removing metalness prevents the flat quads from reflecting the void into a dark mirror
             side: THREE.DoubleSide,
-            map: gridTex
+            map: testMapChecked ? gridTex : null
         });
-        material.defines = { SLUG_MODELSPACE_UV: '' };
-        material.needsUpdate = true;
+
+        if (testMapChecked) {
+            material.defines = { SLUG_MODELSPACE_UV: '' };
+            material.needsUpdate = true;
+        }
     }
 
     let newSlugMesh = new THREE.Mesh(geometry, material);
