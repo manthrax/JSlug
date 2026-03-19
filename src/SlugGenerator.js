@@ -272,10 +272,10 @@ export class SlugGenerator {
             bandsTexBandOffsets[i] += bandHeaderTexels;
         }
 
-        return this.buildOutput(codePointsData, curvesTexData, bandsTexBandOffsets, bandsTexCurveOffsets);
+        return this.buildOutput(codePointsData, curvesTexData, bandsTexBandOffsets, bandsTexCurveOffsets, font);
     }
 
-    buildOutput(codePoints, curvesList, bandOffsets, curveOffsets) {
+    buildOutput(codePoints, curvesList, bandOffsets, curveOffsets, font) {
         // Build DataTextures and codePoint Map
         const map = new Map();
         codePoints.forEach(cp => map.set(cp.codePoint, cp));
