@@ -24,19 +24,18 @@ function init() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x0b192c, 1.0); // Deep blue background
+    renderer.setClearColor(0x000000, 1.0); // Pure black background
     document.body.appendChild(renderer.domElement);
 
     // Swap to Perspective camera to fly around
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
-    camera.position.set(207, -126, 350);
+    camera.position.set(307, -500, 400);
 
     scene = new THREE.Scene();
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.target.copy(camera.position);
-    controls.target.z = -1;
+    controls.target.set(207, 0, 0);
     window.addEventListener('resize', onWindowResize);
 
     document.getElementById('fileSluggish').addEventListener('change', handleSluggishUpload);
@@ -55,7 +54,7 @@ function init() {
         .then(response => response.text())
         .then(text => {
             const textArea = document.getElementById('textInput');
-            textArea.value = text.repeat(10); // Stress test with 10 copies!
+            textArea.value = text; // 1x copies
             if (loadedData) createTextMesh();
         })
         .catch(err => console.error("Could not load main.js for textarea", err));
@@ -233,6 +232,19 @@ function onWindowResize() {
 
 function animate() {
     requestAnimationFrame(animate);
+
+    // Star Wars Title Crawl
+    if (camera && controls) {
+        const speed = 1.0;
+        camera.position.y -= speed;
+        controls.target.y -= speed;
+        if (camera.position.y < -2800) {
+            controls.target.y -= camera.position.y;
+            camera.position.y += 2400;
+            controls.target.y += camera.position.y;
+        }
+    }
+
     if (controls) controls.update();
     renderer.render(scene, camera);
 }
