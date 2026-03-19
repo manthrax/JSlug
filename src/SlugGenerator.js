@@ -1,6 +1,5 @@
 // SlugGenerator.js
 // Port of the Sluggish C++ Generator using opentype.js
-import opentype from 'opentype.js';
 import * as THREE from 'three';
 
 const TEXTURE_WIDTH = 4096;
@@ -15,6 +14,7 @@ export class SlugGenerator {
     }
 
     async generateFromUrl(url) {
+        const opentype = (await import('opentype.js')).default;
         const font = await opentype.load(url);
         return this.generate(font);
     }
@@ -24,7 +24,8 @@ export class SlugGenerator {
         return this.generateFromBuffer(buffer);
     }
 
-    generateFromBuffer(buffer) {
+    async generateFromBuffer(buffer) {
+        const opentype = (await import('opentype.js')).default;
         const font = opentype.parse(buffer);
         return this.generate(font);
     }
