@@ -112,6 +112,18 @@ generator.generateFromUrl('path/to/font.ttf').then((slugData) => {
 4. Toggle the **RawShader Fallback** to swap between Native Standard Lighting graphs or unlit baseline GLSL debugging buffers.
 5. (Optional) Click **Download .sluggish** to cache the generated font data to a serialized binary array.
 
+## NPM
+
+```bash
+npm install three-slug
+```
+
+## GitHub
+
+```bash
+git clone https://github.com/manthrax/JSlug.git
+```
+
 ## Credits & Acknowledgements
 
 *   **Eric Lengyel** for the [Slug Algorithm](http://sluglibrary.com/).
