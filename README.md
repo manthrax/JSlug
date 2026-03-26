@@ -127,6 +127,6 @@ git clone https://github.com/manthrax/JSlug.git
 ## Credits & Acknowledgements
 
 *   **Eric Lengyel** for the [Slug Algorithm](http://sluglibrary.com/).
-*   **The Sluggish C++ Port** for providing the architectural reference for mapping Slug textures directly to generic WebGL buffer pipelines.
+*   **The Sluggish C++ Port** [Sluggish implementation](https://github.com/mightycow/Sluggish/) for providing the architectural reference for mapping Slug textures directly to generic WebGL buffer pipelines.
 *   **[opentype.js](https://github.com/opentypejs/opentype.js)** for providing the native Javascript TrueType parsing core.
 *   Ported to Javascript and Three.js by **[manthrax](https://github.com/manthrax)**.
